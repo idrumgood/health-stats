@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -49,7 +50,7 @@ async function init() {
     });
 
     app.get('/api/auth/whoop', (req, res) => {
-        const url = `https://api.prod.whoop.com/oauth/oauth2/auth?client_id=${WHOOP_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(WHOOP_REDIRECT_URI)}&scope=read:recovery read:sleep read:workout read:cycles read:profile&state=123`;
+        const url = `https://api.prod.whoop.com/oauth/oauth2/auth?client_id=${WHOOP_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(WHOOP_REDIRECT_URI)}&scope=read:recovery read:sleep read:workout read:cycles read:profile&state=${crypto.randomBytes(16).toString('hex')}`;
         res.json({ url });
     });
 
