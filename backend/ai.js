@@ -23,6 +23,7 @@ async function generateInsights(stravaData, whoopData) {
         const result = await model.generateContent(prompt);
         return result.response.text();
     } catch (error) {
+        console.error("Gemini API Error:", error);
         return "An error occurred while generating insights.";
     }
 }
