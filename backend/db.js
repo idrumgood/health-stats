@@ -41,6 +41,18 @@ async function setupDatabase() {
             hrv REAL,
             rhr REAL
         );
+
+        CREATE TABLE IF NOT EXISTS ai_insights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT UNIQUE,
+            data_hash TEXT,
+            summary TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS sync_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            last_sync_date TEXT UNIQUE
+        );
     `);
 
     console.log('Database initialized successfully.');
