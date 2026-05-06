@@ -3,15 +3,15 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 async function generateInsights(stravaData, whoopData) {
     if (!process.env.GEMINI_API_KEY) {
         return "Gemini API key is not configured. Add GEMINI_API_KEY to your .env file to enable AI insights.";
     }
 
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+        const model = await genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
         const prompt = `
             You are a highly intelligent health and fitness coach. Analyze this data and provide 3-4 insightful paragraphs looking for trends.
