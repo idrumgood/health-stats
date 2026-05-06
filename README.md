@@ -4,7 +4,7 @@ A full-stack, local-only dashboard to aggregate and visualize your health and fi
 
 ## Prerequisites
 
-- Node.js (v18 or newer recommended)
+- Node.js (v24 or newer recommended)
 - A Windows Subsystem for Linux (WSL) environment, or macOS/Linux.
 
 ## Getting Started

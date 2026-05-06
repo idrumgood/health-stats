@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 function Setup() {
@@ -6,12 +6,26 @@ function Setup() {
     const [syncing, setSyncing] = useState(false);
     const [syncMessage, setSyncMessage] = useState('');
 
-    useEffect(() => { checkStatus(); }, []);
-
     const checkStatus = async () => {
-        const res = await axios.get('http://localhost:3000/api/auth/status');
-        setStatus(res.data);
+        try {
+            const res = await axios.get('http://localhost:3000/api/auth/status');
+            setStatus(res.data);
+        } catch (e) {
+            console.error(e);
+        }
     };
+
+    useEffect(() => {
+        const fetchStatus = async () => {
+            try {
+                const res = await axios.get('http://localhost:3000/api/auth/status');
+                setStatus(res.data);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchStatus();
+    }, []);
 
     const handleAuth = async (service) => {
         const res = await axios.get(`http://localhost:3000/api/auth/${service}`);
@@ -21,7 +35,7 @@ function Setup() {
     const handleSync = async () => {
         setSyncing(true); setSyncMessage('Syncing...');
         try {
-            const res = await axios.post('http://localhost:3000/api/sync');
+            await axios.post('http://localhost:3000/api/sync');
             setSyncMessage(`Sync complete!`);
         } catch { setSyncMessage('Sync failed.'); }
         setSyncing(false);
