@@ -4,9 +4,9 @@ const path = require('path');
 
 const dbPath = path.resolve(__dirname, 'health_data.db');
 
-async function setupDatabase() {
+async function setupDatabase(filename = dbPath) {
     const db = await open({
-        filename: dbPath,
+        filename: filename,
         driver: sqlite3.Database
     });
 

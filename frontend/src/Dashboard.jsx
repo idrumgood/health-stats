@@ -60,8 +60,11 @@ function Dashboard() {
                     label: 'Recovery Score',
                     data: recentWhoop.map(d => d.recovery_score),
                     borderColor: theme.palette.success.main,
-                    backgroundColor: theme.palette.success.main,
-                    borderWidth: 3,
+                    backgroundColor: theme.palette.success.main + '40', // transparent fill
+                    borderWidth: 5, // bolder
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    fill: true,
                     tension: 0.4,
                     yAxisID: 'y-recovery',
                 },
@@ -78,6 +81,7 @@ function Dashboard() {
 
         // Chart 2: Strava Suffer Score vs Next Day Whoop Recovery
         const scatterData = [];
+        const scatterColors = [];
         data.strava.forEach(activity => {
             if (!activity.start_date || !activity.suffer_score) return;
             const activityDate = activity.start_date.split('T')[0];
@@ -94,6 +98,15 @@ function Dashboard() {
                     y: nextDayWhoop.recovery_score,
                     r: (activity.distance || 0) / 1000 // Bubble size based on distance
                 });
+
+                // Dynamic colors for bubbles based on recovery score
+                if (nextDayWhoop.recovery_score > 66) {
+                    scatterColors.push(theme.palette.success.main); // Green
+                } else if (nextDayWhoop.recovery_score > 33) {
+                    scatterColors.push('#ffb300'); // Amber/Yellow
+                } else {
+                    scatterColors.push(theme.palette.error.main); // Red
+                }
             }
         });
 
@@ -101,10 +114,10 @@ function Dashboard() {
             datasets: [{
                 label: 'Suffer Score vs Next-Day Recovery',
                 data: scatterData,
-                backgroundColor: theme.palette.primary.main + '80', // Add transparency
-                borderColor: theme.palette.primary.main,
-                pointRadius: 6,
-                pointHoverRadius: 8
+                backgroundColor: scatterColors,
+                borderColor: theme.palette.background.paper,
+                borderWidth: 2,
+                hoverBackgroundColor: scatterColors,
             }]
         };
 
@@ -116,7 +129,9 @@ function Dashboard() {
                     label: 'HRV',
                     data: recentWhoop.map(d => d.hrv),
                     borderColor: theme.palette.primary.light,
-                    backgroundColor: theme.palette.primary.light + '40',
+                    backgroundColor: theme.palette.primary.light + '50', // darker fill
+                    borderWidth: 4,
+                    pointRadius: 5,
                     fill: true,
                     tension: 0.4,
                     yAxisID: 'y-hrv',
@@ -125,7 +140,9 @@ function Dashboard() {
                     label: 'RHR',
                     data: recentWhoop.map(d => d.rhr),
                     borderColor: theme.palette.secondary.light,
-                    backgroundColor: theme.palette.secondary.light + '40',
+                    backgroundColor: theme.palette.secondary.light + '50', // darker fill
+                    borderWidth: 4,
+                    pointRadius: 5,
                     fill: true,
                     tension: 0.4,
                     yAxisID: 'y-rhr',
@@ -196,22 +213,26 @@ function Dashboard() {
             </Card>
 
             {/* Charts Section */}
-            <Grid container spacing={3}>
+            <Grid container spacing={4}>
                 {/* Chart 1 */}
-                <Grid item xs={12} lg={6}>
-                    <Card sx={{ height: '100%' }}>
+                <Grid item xs={12}>
+                    <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Strain vs Recovery (Last 14 Days)</Typography>
-                            <Box sx={{ height: 300 }}>
+                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>Strain vs Recovery (Last 14 Days)</Typography>
+                            <Box sx={{ height: 450, mt: 2 }}>
                                 {strainRecoveryData.labels?.length > 0 ? (
                                     <Bar
                                         data={strainRecoveryData}
                                         options={{
                                             responsive: true,
                                             maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: { labels: { color: theme.palette.text.primary, font: { size: 14 } } }
+                                            },
                                             scales: {
-                                                'y-recovery': { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Recovery %' } },
-                                                'y-strain': { type: 'linear', position: 'right', min: 0, max: 21, title: { display: true, text: 'Strain' }, grid: { drawOnChartArea: false } }
+                                                x: { ticks: { color: theme.palette.text.secondary }, grid: { color: theme.palette.divider } },
+                                                'y-recovery': { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Recovery %', color: theme.palette.text.secondary }, ticks: { color: theme.palette.text.secondary }, grid: { color: theme.palette.divider } },
+                                                'y-strain': { type: 'linear', position: 'right', min: 0, max: 21, title: { display: true, text: 'Strain', color: theme.palette.text.secondary }, ticks: { color: theme.palette.text.secondary }, grid: { drawOnChartArea: false } }
                                             }
                                         }}
                                     />
@@ -222,20 +243,23 @@ function Dashboard() {
                 </Grid>
 
                 {/* Chart 2 */}
-                <Grid item xs={12} lg={6}>
-                    <Card sx={{ height: '100%' }}>
+                <Grid item xs={12}>
+                    <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Strava Suffer Score vs Next-Day Recovery</Typography>
-                            <Box sx={{ height: 300 }}>
+                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>Strava Suffer Score vs Next-Day Recovery</Typography>
+                            <Box sx={{ height: 450, mt: 2 }}>
                                 {stravaWhoopScatter.datasets && stravaWhoopScatter.datasets[0]?.data.length > 0 ? (
                                     <Scatter
                                         data={stravaWhoopScatter}
                                         options={{
                                             responsive: true,
                                             maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: { labels: { color: theme.palette.text.primary, font: { size: 14 } } }
+                                            },
                                             scales: {
-                                                x: { title: { display: true, text: 'Strava Suffer Score' } },
-                                                y: { title: { display: true, text: 'Next-Day Recovery %' } }
+                                                x: { title: { display: true, text: 'Strava Suffer Score', color: theme.palette.text.secondary }, ticks: { color: theme.palette.text.secondary }, grid: { color: theme.palette.divider } },
+                                                y: { title: { display: true, text: 'Next-Day Recovery %', color: theme.palette.text.secondary }, ticks: { color: theme.palette.text.secondary }, grid: { color: theme.palette.divider } }
                                             }
                                         }}
                                     />
@@ -249,17 +273,21 @@ function Dashboard() {
                 <Grid item xs={12}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Baseline Fitness Trends (HRV & RHR)</Typography>
-                            <Box sx={{ height: 300 }}>
+                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>Baseline Fitness Trends (HRV & RHR)</Typography>
+                            <Box sx={{ height: 450, mt: 2 }}>
                                 {baselineFitnessData.labels?.length > 0 ? (
                                     <Line
                                         data={baselineFitnessData}
                                         options={{
                                             responsive: true,
                                             maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: { labels: { color: theme.palette.text.primary, font: { size: 14 } } }
+                                            },
                                             scales: {
-                                                'y-hrv': { type: 'linear', position: 'left', title: { display: true, text: 'HRV (ms)' } },
-                                                'y-rhr': { type: 'linear', position: 'right', title: { display: true, text: 'RHR (bpm)' }, grid: { drawOnChartArea: false } }
+                                                x: { ticks: { color: theme.palette.text.secondary }, grid: { color: theme.palette.divider } },
+                                                'y-hrv': { type: 'linear', position: 'left', title: { display: true, text: 'HRV (ms)', color: theme.palette.text.secondary }, ticks: { color: theme.palette.text.secondary }, grid: { color: theme.palette.divider } },
+                                                'y-rhr': { type: 'linear', position: 'right', title: { display: true, text: 'RHR (bpm)', color: theme.palette.text.secondary }, ticks: { color: theme.palette.text.secondary }, grid: { drawOnChartArea: false } }
                                             }
                                         }}
                                     />
