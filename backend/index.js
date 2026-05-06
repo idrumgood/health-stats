@@ -67,6 +67,13 @@ async function init() {
     });
 
     app.post('/api/sync', async (req, res) => {
+        const today = new Date().toISOString().split('T')[0];
+        const lastSync = await db.get('SELECT * FROM sync_history ORDER BY id DESC LIMIT 1');
+
+        if (lastSync && lastSync.last_sync_date === today) {
+            return res.json({ message: 'Sync already performed today.', results: { strava: false, whoop: false, errors: [], cached: true } });
+        }
+
         const results = { strava: false, whoop: false, errors: [] };
         if (await db.get('SELECT * FROM tokens WHERE service = ?', ['strava'])) {
             try { await syncStrava(db); results.strava = true; } catch (e) { results.errors.push(e.message); }
@@ -74,6 +81,11 @@ async function init() {
         if (await db.get('SELECT * FROM tokens WHERE service = ?', ['whoop'])) {
             try { await syncWhoop(db); results.whoop = true; } catch (e) { results.errors.push(e.message); }
         }
+
+        if (results.strava || results.whoop) {
+            await db.run('INSERT OR REPLACE INTO sync_history (id, last_sync_date) VALUES (1, ?)', [today]);
+        }
+
         res.json({ message: 'Sync complete', results });
     });
 
@@ -85,10 +97,40 @@ async function init() {
     });
 
     app.get('/api/insights', async (req, res) => {
+        const today = new Date().toISOString().split('T')[0];
+
+        // Check if we already generated a summary today
+        const todayInsight = await db.get('SELECT * FROM ai_insights WHERE date = ?', [today]);
+        if (todayInsight) {
+            return res.json({ text: todayInsight.summary, cached: true });
+        }
+
         const stravaData = await db.all('SELECT * FROM strava_activities ORDER BY start_date DESC LIMIT 15');
         const whoopData = await db.all('SELECT * FROM whoop_data ORDER BY date DESC LIMIT 15');
         if (!stravaData.length && !whoopData.length) return res.json({ text: "Not enough data to generate insights yet." });
-        res.json({ text: await generateInsights(stravaData, whoopData) });
+
+        // Calculate hash of current data
+        const dataString = JSON.stringify({ strava: stravaData, whoop: whoopData });
+        const currentHash = crypto.createHash('sha256').update(dataString).digest('hex');
+
+        const existingInsight = await db.get('SELECT * FROM ai_insights ORDER BY id DESC LIMIT 1');
+
+        // If data hasn't changed from the last cached insight, just update the date
+        if (existingInsight && existingInsight.data_hash === currentHash) {
+            await db.run('UPDATE ai_insights SET date = ? WHERE id = ?', [today, existingInsight.id]);
+            return res.json({ text: existingInsight.summary, cached: true });
+        }
+
+        // Generate new insights
+        const newSummary = await generateInsights(stravaData, whoopData);
+
+        // Store new insight, using INSERT OR REPLACE to prevent race conditions during React StrictMode double mounts
+        await db.run(
+            'INSERT OR REPLACE INTO ai_insights (date, data_hash, summary) VALUES (?, ?, ?)',
+            [today, currentHash, newSummary]
+        );
+
+        res.json({ text: newSummary, cached: false });
     });
 
     app.listen(PORT, () => console.log(`Backend running on ${PORT}`));

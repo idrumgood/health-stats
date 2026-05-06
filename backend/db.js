@@ -4,9 +4,9 @@ const path = require('path');
 
 const dbPath = path.resolve(__dirname, 'health_data.db');
 
-async function setupDatabase(filename = dbPath) {
+async function setupDatabase() {
     const db = await open({
-        filename: filename,
+        filename: dbPath,
         driver: sqlite3.Database
     });
 
@@ -40,6 +40,18 @@ async function setupDatabase(filename = dbPath) {
             recovery_score REAL,
             hrv REAL,
             rhr REAL
+        );
+
+        CREATE TABLE IF NOT EXISTS ai_insights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT UNIQUE,
+            data_hash TEXT,
+            summary TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS sync_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            last_sync_date TEXT UNIQUE
         );
     `);
 
