@@ -100,9 +100,9 @@ async function init() {
         const today = new Date().toISOString().split('T')[0];
 
         // Check if we already generated a summary today
-        const existingInsight = await db.get('SELECT * FROM ai_insights ORDER BY id DESC LIMIT 1');
-        if (existingInsight && existingInsight.date === today) {
-            return res.json({ text: existingInsight.summary, cached: true });
+        const todayInsight = await db.get('SELECT * FROM ai_insights WHERE date = ?', [today]);
+        if (todayInsight) {
+            return res.json({ text: todayInsight.summary, cached: true });
         }
 
         const stravaData = await db.all('SELECT * FROM strava_activities ORDER BY start_date DESC LIMIT 15');
@@ -113,6 +113,8 @@ async function init() {
         const dataString = JSON.stringify({ strava: stravaData, whoop: whoopData });
         const currentHash = crypto.createHash('sha256').update(dataString).digest('hex');
 
+        const existingInsight = await db.get('SELECT * FROM ai_insights ORDER BY id DESC LIMIT 1');
+
         // If data hasn't changed from the last cached insight, just update the date
         if (existingInsight && existingInsight.data_hash === currentHash) {
             await db.run('UPDATE ai_insights SET date = ? WHERE id = ?', [today, existingInsight.id]);
@@ -122,9 +124,9 @@ async function init() {
         // Generate new insights
         const newSummary = await generateInsights(stravaData, whoopData);
 
-        // Store new insight
+        // Store new insight, using INSERT OR REPLACE to prevent race conditions during React StrictMode double mounts
         await db.run(
-            'INSERT INTO ai_insights (date, data_hash, summary) VALUES (?, ?, ?)',
+            'INSERT OR REPLACE INTO ai_insights (date, data_hash, summary) VALUES (?, ?, ?)',
             [today, currentHash, newSummary]
         );
 
