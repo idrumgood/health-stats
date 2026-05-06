@@ -11,7 +11,7 @@ async function generateInsights(stravaData, whoopData) {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
         const prompt = `
             You are a highly intelligent health and fitness coach. Analyze this data and provide 3-4 insightful paragraphs looking for trends.
