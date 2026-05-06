@@ -1,3 +1,5 @@
 node_modules/
 .env
 dev.log
+health_data.db
+backend/health_data.db
